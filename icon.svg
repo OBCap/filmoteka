@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0d0d0d" rx="80"/>
+  <rect x="80" y="160" width="352" height="240" rx="12" fill="none" stroke="#e8c96d" stroke-width="14"/>
+  <circle cx="256" cy="280" r="60" fill="none" stroke="#e8c96d" stroke-width="14"/>
+  <polygon points="240,255 240,305 285,280" fill="#e8c96d"/>
+  <rect x="80" y="140" width="50" height="40" rx="6" fill="#e8c96d"/>
+  <rect x="382" y="140" width="50" height="40" rx="6" fill="#e8c96d"/>
+  <rect x="155" y="140" width="30" height="40" rx="4" fill="#e8c96d" opacity="0.5"/>
+  <rect x="327" y="140" width="30" height="40" rx="4" fill="#e8c96d" opacity="0.5"/>
+  <text x="256" y="115" font-family="Georgia,serif" font-size="52" fill="#e8c96d" text-anchor="middle" font-weight="bold">Ф</text>
+</svg>
