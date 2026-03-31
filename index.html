@@ -637,7 +637,7 @@ function renderList(){
   el.innerHTML=list.map((m,i)=>{
     const meta=[m.year,m.country].filter(Boolean).join(' · ');
     const genres=(m.genres||[]).map(g=>`<span class="badge badge-genre">${esc(g)}</span>`).join('');
-    const wB=m.watched?`<span class="badge badge-watched">✓ просм.</span>`:'';
+    const wB='';
     const rB=m.rating?`<span class="meta-text" style="color:var(--accent)">★ ${m.rating}/10</span>`:'';
 
     // duration info
