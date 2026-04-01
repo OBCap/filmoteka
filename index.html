@@ -505,7 +505,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
    STATE
 ══════════════════════════════════════════════ */
 let movies=[], sortMode='date', filterTab='', filterGenres=[];
-let selectedType='film', selectedGenres=[], formRating=0;
+let selectedType='film', selectedGenres=[], formRating=0, formWatched=false;
 let coverDataUrl='', editingId=null;
 let db=null; // IndexedDB instance
 
@@ -719,6 +719,7 @@ function openEditSheet(id){
   document.querySelectorAll('#genreChips .chip').forEach(c=>c.classList.toggle('sel',selectedGenres.includes(c.dataset.genre)));
 
   setFormRating(m.rating||0);
+  setFormWatched(m.watched||false);
   updateCoverUI(coverDataUrl);
   updateFormUrlBtn();
   document.getElementById('dupWarn').classList.remove('show');
@@ -741,6 +742,7 @@ function resetForm(){
   selectedGenres=[];
   document.querySelectorAll('#genreChips .chip').forEach(c=>c.classList.remove('sel'));
   setFormRating(0);
+  setFormWatched(false);
   coverDataUrl=''; updateCoverUI(''); updateFormUrlBtn();
 }
 
@@ -759,6 +761,7 @@ async function submitForm(){
     type:      selectedType,
     genres:    [...selectedGenres],
     rating:    formRating,
+    watched:   formWatched,
     imdb:      document.getElementById('inImdb').value.trim(),
     kp:        document.getElementById('inKp').value.trim(),
     url:       document.getElementById('inUrl').value.trim(),
@@ -775,7 +778,7 @@ async function submitForm(){
     if(idx!==-1){ movies[idx]={...movies[idx],...data}; await dbPut(movies[idx]); }
     showToast('Сохранено');
   }else{
-    const movie={id:Date.now(),added:Date.now(),watched:false,...data};
+    const movie={id:Date.now(),added:Date.now(),...data};
     movies.unshift(movie);
     await dbPut(movie);
     showToast('Добавлено: '+title);
@@ -784,6 +787,26 @@ async function submitForm(){
 }
 
 /* ── form helpers ── */
+
+function setFormWatched(val){
+  formWatched=val;
+  const icon=document.getElementById('watchedToggleIcon');
+  const hint=document.getElementById('watchedToggleHint');
+  const sw  =document.getElementById('watchedToggleSwitch');
+  const knob=document.getElementById('watchedToggleKnob');
+  if(val){
+    icon.textContent='✓';
+    hint.textContent='Просмотрен';
+    sw.style.background='#3a7a4a';
+    knob.style.transform='translateX(18px)';
+  }else{
+    icon.textContent='◌';
+    hint.textContent='Нажмите чтобы отметить';
+    sw.style.background='var(--border)';
+    knob.style.transform='translateX(0)';
+  }
+}
+function toggleFormWatched(){ setFormWatched(!formWatched); }
 function checkDup(){
   const val=document.getElementById('inTitle').value.trim().toLowerCase();
   const warn=document.getElementById('dupWarn');
