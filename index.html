@@ -188,6 +188,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
 .db-status{font-size:.6rem;color:var(--muted);text-align:center;padding:6px;letter-spacing:.08em}
 
 /* ── TOAST ── */
+
+/* ── COVER LIGHTBOX ── */
+.cover-lightbox{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);padding:24px}
+.cover-lightbox.open{display:flex}
+.cover-lightbox img{max-width:300px;max-height:425px;width:100%;object-fit:contain;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+.cover-lightbox-close{position:absolute;top:calc(var(--top)+16px);right:20px;background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .toast{position:fixed;top:calc(var(--top) + 60px);left:50%;transform:translateX(-50%) translateY(-12px);background:var(--text);color:var(--bg);padding:9px 20px;border-radius:20px;font-size:.78rem;letter-spacing:.05em;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:300;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -243,7 +249,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
       <div class="field">
         <label>Обложка</label>
         <div class="cover-area">
-          <img  class="cover-preview"     id="coverPreview" src="" alt="cover" style="display:none">
+          <img  class="cover-preview"     id="coverPreview" src="" alt="cover" style="display:none;cursor:zoom-in" onclick="openCoverLightbox()">
           <div  class="cover-placeholder" id="coverPlaceholder">🎬</div>
           <div class="cover-actions">
             <button class="cover-btn" onclick="pasteFromClipboard()">📋 Вставить из буфера</button>
@@ -1115,6 +1121,17 @@ function pl(n,a,b,c){
   return c;
 }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ── COVER LIGHTBOX ── */
+function openCoverLightbox(){
+  if(!coverDataUrl)return;
+  document.getElementById('coverLightboxImg').src=coverDataUrl;
+  document.getElementById('coverLightbox').classList.add('open');
+}
+function closeCoverLightbox(){
+  document.getElementById('coverLightbox').classList.remove('open');
+}
+
 function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2200);
@@ -1144,5 +1161,11 @@ async function init(){
 document.getElementById('confirmOk').addEventListener('click',()=>{if(_confirmCb)_confirmCb();closeConfirm();});
 init();
 </script>
+<!-- COVER LIGHTBOX -->
+<div class="cover-lightbox" id="coverLightbox" onclick="closeCoverLightbox()">
+  <button class="cover-lightbox-close" onclick="closeCoverLightbox()">✕</button>
+  <img id="coverLightboxImg" src="" alt="cover">
+</div>
+
 </body>
 </html>
