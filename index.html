@@ -155,6 +155,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
 .genre-filter-chips{display:flex;flex-wrap:wrap;gap:8px;padding:14px 20px 0}
 .gf-chip{padding:8px 14px;border-radius:8px;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);cursor:pointer;background:var(--surface2);transition:all .15s}
 .gf-chip.sel{background:#a07ac4;border-color:#a07ac4;color:#fff}
+.gf-chip.gf-empty{opacity:.4}
 .genre-actions{display:flex;gap:10px;padding:16px 20px calc(var(--safe) + 16px)}
 
 /* ── MENU ── */
@@ -345,24 +346,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
 
       <div class="field">
         <label>Жанры (можно несколько)</label>
-        <div class="chips" id="genreChips">
-          <div class="chip" data-genre="Драма"       onclick="toggleGenre(this)">Драма</div>
-          <div class="chip" data-genre="Комедия"     onclick="toggleGenre(this)">Комедия</div>
-          <div class="chip" data-genre="Триллер"     onclick="toggleGenre(this)">Триллер</div>
-          <div class="chip" data-genre="Боевик"      onclick="toggleGenre(this)">Боевик</div>
-          <div class="chip" data-genre="Ужасы"       onclick="toggleGenre(this)">Ужасы</div>
-          <div class="chip" data-genre="Фантастика"  onclick="toggleGenre(this)">Фантастика</div>
-          <div class="chip" data-genre="Фэнтези"     onclick="toggleGenre(this)">Фэнтези</div>
-          <div class="chip" data-genre="Мелодрама"   onclick="toggleGenre(this)">Мелодрама</div>
-          <div class="chip" data-genre="Анимация"    onclick="toggleGenre(this)">Анимация</div>
-          <div class="chip" data-genre="Криминал"    onclick="toggleGenre(this)">Криминал</div>
-          <div class="chip" data-genre="Биография"   onclick="toggleGenre(this)">Биография</div>
-          <div class="chip" data-genre="История"     onclick="toggleGenre(this)">История</div>
-          <div class="chip" data-genre="Приключения" onclick="toggleGenre(this)">Приключения</div>
-          <div class="chip" data-genre="Спорт"       onclick="toggleGenre(this)">Спорт</div>
-          <div class="chip" data-genre="Мюзикл"      onclick="toggleGenre(this)">Мюзикл</div>
-          <div class="chip" data-genre="Вестерн"     onclick="toggleGenre(this)">Вестерн</div>
-        </div>
+        <div class="chips" id="genreChips"></div>
       </div>
 
       <!-- ПРОДОЛЖИТЕЛЬНОСТЬ -->
@@ -592,7 +576,13 @@ let enabledCountries=new Set(); // names of countries shown in picker dropdown
 let db=null; // IndexedDB instance
 
 const DB_NAME='filmoteka', DB_VER=1, STORE='movies';
-const ALL_GENRES=['Драма','Комедия','Триллер','Боевик','Ужасы','Фантастика','Фэнтези','Мелодрама','Анимация','Криминал','Биография','История','Приключения','Спорт','Мюзикл','Вестерн'];
+const ALL_GENRES=[
+  'Анимация','Биография','Боевик','Вестерн','Военный',
+  'Детектив','Детский','Драма','История','Комедия',
+  'Криминал','Мелодрама','Мультфильм','Мюзикл','Приключения',
+  'Семейный','Спорт','Триллер','Ужасы','Фантастика',
+  'Фэнтези'
+];
 const TYPE_LABELS={film:'Фильм',series:'Сериал',web:'Web',doc:'Докум.'};
 const BADGE_CLASS={film:'badge-film',series:'badge-series',web:'badge-web',doc:'badge-doc'};
 const SERIES_TYPES=new Set(['series','web']);
@@ -803,7 +793,7 @@ function openEditSheet(id){
   updateDurationBlock();
 
   selectedGenres=[...(m.genres||[])];
-  document.querySelectorAll('#genreChips .chip').forEach(c=>c.classList.toggle('sel',selectedGenres.includes(c.dataset.genre)));
+  renderGenreChips();
 
   setFormRating(m.rating||0);
   setFormWatched(m.watched||false);
@@ -829,7 +819,7 @@ function resetForm(){
   document.querySelectorAll('#typeChips .chip').forEach(c=>c.classList.toggle('sel',c.dataset.type==='film'));
   updateDurationBlock();
   selectedGenres=[];
-  document.querySelectorAll('#genreChips .chip').forEach(c=>c.classList.remove('sel'));
+  renderGenreChips();
   setFormRating(0);
   setFormWatched(false);
   coverDataUrl=''; updateCoverUI(''); updateFormUrlBtn();
@@ -914,6 +904,12 @@ function updateDurationBlock(){
   const isSeries=SERIES_TYPES.has(selectedType);
   document.getElementById('durationFilmBlock').style.display=isSeries?'none':'block';
   document.getElementById('durationSeriesBlock').style.display=isSeries?'block':'none';
+}
+
+function renderGenreChips(){
+  document.getElementById('genreChips').innerHTML=ALL_GENRES.map(g=>
+    `<div class="chip${selectedGenres.includes(g)?' sel':''}" data-genre="${g}" onclick="toggleGenre(this)">${g}</div>`
+  ).join('');
 }
 
 function toggleGenre(el){
@@ -1015,11 +1011,11 @@ function setSort(mode){
 ══════════════════════════════════════════════ */
 function openGenreSheet(){
   const used=new Set();movies.forEach(m=>(m.genres||[]).forEach(g=>used.add(g)));
-  const toShow=ALL_GENRES.filter(g=>used.has(g));
-  if(!toShow.length){showToast('Жанры ещё не добавлены');return;}
-  document.getElementById('genreFilterChips').innerHTML=toShow.map(g=>
-    `<div class="gf-chip${filterGenres.includes(g)?' sel':''}" data-g="${esc(g)}" onclick="this.classList.toggle('sel')">${esc(g)}</div>`
-  ).join('');
+  document.getElementById('genreFilterChips').innerHTML=ALL_GENRES.map(g=>{
+    const hasMovies=used.has(g);
+    const sel=filterGenres.includes(g);
+    return `<div class="gf-chip${sel?' sel':''}${hasMovies?'':' gf-empty'}" data-g="${esc(g)}" onclick="this.classList.toggle('sel')" title="${hasMovies?'':'Нет фильмов с этим жанром'}">${esc(g)}</div>`;
+  }).join('');
   openSheet('genreSheet');
 }
 function applyGenreFilter(){
