@@ -227,6 +227,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
 .cmgr-search-wrap{padding:10px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
 .cmgr-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:.82rem;color:var(--text);outline:none;-webkit-appearance:none}
 .cmgr-search:focus{border-color:var(--accent)}
+
+/* ── SVG FLAGS ── */
+.flag-img{width:20px;height:14px;border-radius:2px;object-fit:cover;vertical-align:middle;display:inline-block;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.flag-img-sm{width:16px;height:11px;border-radius:2px;object-fit:cover;vertical-align:middle;display:inline-block;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.flag-img-lg{width:24px;height:17px;border-radius:2px;object-fit:cover;vertical-align:middle;display:inline-block;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.flags-row{display:inline-flex;gap:3px;align-items:center}
 .toast{position:fixed;top:calc(var(--top) + 60px);left:50%;transform:translateX(-50%) translateY(-12px);background:var(--text);color:var(--bg);padding:9px 20px;border-radius:20px;font-size:.78rem;letter-spacing:.05em;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:300;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -712,7 +718,7 @@ function renderList(){
 
   el.innerHTML=list.map((m,i)=>{
     const countries = (m.countries && m.countries.length) ? m.countries : (m.country ? [m.country] : []);
-    const flagsHtml = countries.map(c=>countryFlag(c)).join('');
+    const flagsHtml = countries.map(c=>countryFlagImg(c,'flag-img')).join('');
     const meta=[m.year].filter(Boolean).join(' · ');
     const genres=(m.genres||[]).map(g=>`<span class="badge badge-genre">${esc(g)}</span>`).join('');
     const wB='';
@@ -750,7 +756,7 @@ function renderList(){
         ${m.orig?`<div class="movie-orig">${esc(m.orig)}</div>`:''}
         <div class="movie-meta">
           ${meta?`<span class="meta-text">${esc(meta)}</span>`:''}
-          ${flagsHtml?`<span class="meta-text" title="${esc(countries.join(', '))}" style="font-size:1rem;letter-spacing:2px">${flagsHtml}</span>`:''}
+          ${flagsHtml?`<span class="flags-row" title="${esc(countries.join(', '))}">${flagsHtml}</span>`:''}
           <span class="badge ${BADGE_CLASS[m.type]||'badge-film'}">${TYPE_LABELS[m.type]||m.type}</span>
           ${wB}${rB}${durText}${genres}
         </div>
@@ -1247,7 +1253,7 @@ function renderCountriesMgr(){
   document.getElementById('cmgrList').innerHTML=list.map(c=>{
     const on=enabledCountries.has(c.n);
     return `<div class="cmgr-item" onclick="cmgrToggle('${c.n}')">
-      <span class="cmgr-flag">${c.f}</span>
+      <span class="cmgr-flag"><img src="${flagUrl(c.c)}" class="flag-img-lg" alt="${c.n}" loading="lazy"></span>
       <span class="cmgr-name">${esc(c.n)}</span>
       <div class="cmgr-toggle${on?' on':''}"></div>
     </div>`;
@@ -1277,28 +1283,40 @@ function cmgrSelectNone(){
    COUNTRIES
 ══════════════════════════════════════════════ */
 const COUNTRIES=[
-  {n:'США',f:'🇺🇸'},{n:'Великобритания',f:'🇬🇧'},{n:'Франция',f:'🇫🇷'},
-  {n:'Германия',f:'🇩🇪'},{n:'Италия',f:'🇮🇹'},{n:'Испания',f:'🇪🇸'},
-  {n:'Япония',f:'🇯🇵'},{n:'Южная Корея',f:'🇰🇷'},{n:'Китай',f:'🇨🇳'},
-  {n:'Россия',f:'🇷🇺'},{n:'СССР',f:'🇸🇺'},{n:'Украина',f:'🇺🇦'},
-  {n:'Австралия',f:'🇦🇺'},{n:'Канада',f:'🇨🇦'},{n:'Мексика',f:'🇲🇽'},
-  {n:'Бразилия',f:'🇧🇷'},{n:'Аргентина',f:'🇦🇷'},{n:'Индия',f:'🇮🇳'},
-  {n:'Иран',f:'🇮🇷'},{n:'Турция',f:'🇹🇷'},{n:'Израиль',f:'🇮🇱'},
-  {n:'Швеция',f:'🇸🇪'},{n:'Норвегия',f:'🇳🇴'},{n:'Дания',f:'🇩🇰'},
-  {n:'Финляндия',f:'🇫🇮'},{n:'Нидерланды',f:'🇳🇱'},{n:'Бельгия',f:'🇧🇪'},
-  {n:'Швейцария',f:'🇨🇭'},{n:'Австрия',f:'🇦🇹'},{n:'Польша',f:'🇵🇱'},
-  {n:'Чехия',f:'🇨🇿'},{n:'Венгрия',f:'🇭🇺'},{n:'Румыния',f:'🇷🇴'},
-  {n:'Португалия',f:'🇵🇹'},{n:'Греция',f:'🇬🇷'},{n:'Ирландия',f:'🇮🇪'},
-  {n:'Новая Зеландия',f:'🇳🇿'},{n:'ЮАР',f:'🇿🇦'},{n:'Египет',f:'🇪🇬'},
-  {n:'Нигерия',f:'🇳🇬'},{n:'Гонконг',f:'🇭🇰'},{n:'Тайвань',f:'🇹🇼'},
-  {n:'Таиланд',f:'🇹🇭'},{n:'Вьетнам',f:'🇻🇳'},{n:'Филиппины',f:'🇵🇭'},
-  {n:'Колумбия',f:'🇨🇴'},{n:'Чили',f:'🇨🇱'},{n:'Перу',f:'🇵🇪'},
-  {n:'Сербия',f:'🇷🇸'},{n:'Хорватия',f:'🇭🇷'},{n:'Словакия',f:'🇸🇰'},
+  {n:'США',c:'us'},{n:'Великобритания',c:'gb'},{n:'Франция',c:'fr'},
+  {n:'Германия',c:'de'},{n:'Италия',c:'it'},{n:'Испания',c:'es'},
+  {n:'Япония',c:'jp'},{n:'Южная Корея',c:'kr'},{n:'Китай',c:'cn'},
+  {n:'Россия',c:'ru'},{n:'СССР',c:'su'},{n:'Украина',c:'ua'},
+  {n:'Австралия',c:'au'},{n:'Канада',c:'ca'},{n:'Мексика',c:'mx'},
+  {n:'Бразилия',c:'br'},{n:'Аргентина',c:'ar'},{n:'Индия',c:'in'},
+  {n:'Иран',c:'ir'},{n:'Турция',c:'tr'},{n:'Израиль',c:'il'},
+  {n:'Швеция',c:'se'},{n:'Норвегия',c:'no'},{n:'Дания',c:'dk'},
+  {n:'Финляндия',c:'fi'},{n:'Нидерланды',c:'nl'},{n:'Бельгия',c:'be'},
+  {n:'Швейцария',c:'ch'},{n:'Австрия',c:'at'},{n:'Польша',c:'pl'},
+  {n:'Чехия',c:'cz'},{n:'Венгрия',c:'hu'},{n:'Румыния',c:'ro'},
+  {n:'Португалия',c:'pt'},{n:'Греция',c:'gr'},{n:'Ирландия',c:'ie'},
+  {n:'Новая Зеландия',c:'nz'},{n:'ЮАР',c:'za'},{n:'Египет',c:'eg'},
+  {n:'Нигерия',c:'ng'},{n:'Гонконг',c:'hk'},{n:'Тайвань',c:'tw'},
+  {n:'Таиланд',c:'th'},{n:'Вьетнам',c:'vn'},{n:'Филиппины',c:'ph'},
+  {n:'Колумбия',c:'co'},{n:'Чили',c:'cl'},{n:'Перу',c:'pe'},
+  {n:'Сербия',c:'rs'},{n:'Хорватия',c:'hr'},{n:'Словакия',c:'sk'},
 ];
+// СССР не имеет ISO кода — используем кастомный fallback
+const FLAG_OVERRIDES={su:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Flag_of_the_Soviet_Union.svg/20px-Flag_of_the_Soviet_Union.svg.png'};
 
-function countryFlag(name){
+function flagUrl(code){
+  if(FLAG_OVERRIDES[code])return FLAG_OVERRIDES[code];
+  return `https://flagcdn.com/w20/${code}.png`;
+}
+function countryFlagImg(name,cls='flag-img'){
   const c=COUNTRIES.find(c=>c.n===name);
-  return c?c.f:(name?'🏳':'');
+  if(!c)return '';
+  return `<img src="${flagUrl(c.c)}" class="${cls}" alt="${name}" title="${name}" loading="lazy">`;
+}
+// Legacy — kept for cmgr list text display
+function countryCode(name){
+  const c=COUNTRIES.find(c=>c.n===name);
+  return c?c.c:'';
 }
 
 let countryDropdownOpen=false;
@@ -1330,7 +1348,7 @@ function renderCountryList(q){
   const makeOpt=(c,dimmed)=>{
     const sel=selectedCountries.includes(c.n);
     return `<div class="country-opt${sel?' selected':''}${dimmed?' dimmed':''}" onclick="toggleCountry('${c.n}')">
-      <span class="flag">${c.f}</span>
+      <span class="flag"><img src="${flagUrl(c.c)}" class="flag-img-lg" alt="${c.n}" loading="lazy"></span>
       <span class="name">${esc(c.n)}${dimmed?'<span style="font-size:.6rem;color:var(--muted);margin-left:4px">(не в списке)</span>':''}</span>
       ${sel?'<span class="check">✓</span>':''}
     </div>`;
@@ -1365,7 +1383,8 @@ function renderCountrySelected(){
     const flag=countryFlag(name);
     const tag=document.createElement('span');
     tag.className='country-flag-tag';
-    tag.innerHTML=`${flag} ${esc(name)}<span class="rm" onclick="event.stopPropagation();toggleCountry('${name}')">✕</span>`;
+    const flagImg=countryFlagImg(name,'flag-img-sm');
+    tag.innerHTML=`${flagImg} ${esc(name)}<span class="rm" onclick="event.stopPropagation();toggleCountry('${name}')">✕</span>`;
     wrap.appendChild(tag);
   });
 }
