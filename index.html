@@ -112,7 +112,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
 .field select option{background:var(--surface2);color:var(--text)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-.dup-warn{font-size:.72rem;color:var(--danger);display:none;letter-spacing:.03em;margin-top:2px}
+.dup-warn{font-size:.72rem;color:var(--accent2);display:none;letter-spacing:.03em;margin-top:2px}
 .dup-warn.show{display:block}
 .section-divider{font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:2px}
 
@@ -194,6 +194,39 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
 .cover-lightbox.open{display:flex}
 .cover-lightbox img{max-width:300px;max-height:425px;width:100%;object-fit:contain;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
 .cover-lightbox-close{position:absolute;top:calc(var(--top)+16px);right:20px;background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+
+/* ── COUNTRY PICKER ── */
+.country-selected{display:flex;flex-wrap:wrap;gap:6px;min-height:38px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer;transition:border-color .15s;align-items:center}
+.country-selected:focus-within,.country-selected.open{border-color:var(--accent)}
+.country-flag-tag{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:.8rem;cursor:default}
+.country-flag-tag .rm{margin-left:2px;cursor:pointer;color:var(--muted);font-size:.75rem}
+.country-flag-tag .rm:hover{color:var(--danger)}
+.country-placeholder{font-size:.82rem;color:var(--muted)}
+.country-dropdown{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:4px;display:none;max-height:260px;overflow-y:auto}
+.country-dropdown.open{display:block}
+.country-search-wrap{padding:8px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface)}
+.country-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:'DM Mono',monospace;font-size:.82rem;color:var(--text);outline:none}
+.country-search:focus{border-color:var(--accent)}
+.country-opt{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:.85rem;transition:background .1s}
+.country-opt:active,.country-opt:hover{background:var(--surface2)}
+.country-opt.selected{color:var(--accent)}
+.country-opt .flag{font-size:1.2rem;width:24px;text-align:center}
+.country-opt .name{flex:1}
+.country-opt .check{color:var(--accent);font-size:.8rem}
+
+/* ── COUNTRIES MANAGER ── */
+.cmgr-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
+.cmgr-item:active{background:var(--surface2)}
+.cmgr-flag{font-size:1.3rem;width:28px;text-align:center;flex-shrink:0}
+.cmgr-name{flex:1;font-size:.88rem;color:var(--text)}
+.cmgr-toggle{width:36px;height:22px;border-radius:11px;background:var(--border);position:relative;transition:background .2s;flex-shrink:0}
+.cmgr-toggle.on{background:#3a7a4a}
+.cmgr-toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.cmgr-toggle.on::after{transform:translateX(14px)}
+.cmgr-actions{display:flex;gap:10px;padding:12px 20px calc(var(--safe)+12px);border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--surface)}
+.cmgr-search-wrap{padding:10px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.cmgr-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'DM Mono',monospace;font-size:.82rem;color:var(--text);outline:none;-webkit-appearance:none}
+.cmgr-search:focus{border-color:var(--accent)}
 .toast{position:fixed;top:calc(var(--top) + 60px);left:50%;transform:translateX(-50%) translateY(-12px);background:var(--text);color:var(--bg);padding:9px 20px;border-radius:20px;font-size:.78rem;letter-spacing:.05em;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:300;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -267,7 +300,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
       <div class="field">
         <label>Название *</label>
         <input type="text" id="inTitle" placeholder="Русское название..." autocomplete="off" oninput="checkDup()">
-        <div class="dup-warn" id="dupWarn">⚠ Уже есть: <span id="dupName"></span></div>
+        <div class="dup-warn" id="dupWarn">⚠ Уже есть похожее название: <span id="dupName"></span> — можно всё равно добавить</div>
       </div>
 
       <div class="field">
@@ -280,9 +313,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
           <label>Год</label>
           <input type="number" id="inYear" placeholder="2024" min="1888" max="2099" inputmode="numeric">
         </div>
-        <div class="field">
-          <label>Страна</label>
-          <input type="text" id="inCountry" placeholder="США...">
+        <div class="field" style="grid-column:1/-1">
+          <label>Страны производства</label>
+          <div class="country-selected" id="countriesSelected" onclick="toggleCountryDropdown()">
+            <span class="country-placeholder" id="countriesPlaceholder">Выберите страну...</span>
+          </div>
+          <div class="country-dropdown" id="countryDropdown">
+            <div class="country-search-wrap">
+              <input class="country-search" id="countrySearch" type="search" placeholder="Поиск страны..." oninput="filterCountries()" autocomplete="off">
+            </div>
+            <div id="countryList"></div>
+          </div>
         </div>
       </div>
 
@@ -481,12 +522,40 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
 
     <div class="menu-sep"></div>
 
+    <div class="menu-item" onclick="openCountriesMgr()">
+      <div class="menu-icon gold">🌍</div>
+      <div><div class="menu-lbl">Список стран</div><div class="menu-desc">Выбрать страны в выпадающем меню</div></div>
+    </div>
+
+    <div class="menu-sep"></div>
+
     <div class="menu-item" onclick="confirmClear()">
       <div class="menu-icon red">✕</div>
       <div><div class="menu-lbl" style="color:var(--danger)">Очистить каталог</div><div class="menu-desc">Удалить все записи</div></div>
     </div>
     <div class="db-status" id="dbStatus">хранилище: IndexedDB</div>
     <div style="height:calc(var(--safe) + 4px)"></div>
+  </div>
+</div>
+
+
+<!-- ═══ COUNTRIES MANAGER SHEET ═══ -->
+<div class="sheet-base" id="countriesMgrSheet" style="z-index:150">
+  <div class="s-overlay" onclick="closeSheet('countriesMgrSheet')"></div>
+  <div class="s-panel" style="max-height:92vh">
+    <div class="s-handle"></div>
+    <div class="s-header">
+      <div class="s-title">Список стран</div>
+      <button class="s-close" onclick="closeSheet('countriesMgrSheet')">✕</button>
+    </div>
+    <div class="cmgr-search-wrap">
+      <input class="cmgr-search" id="cmgrSearch" type="search" placeholder="Поиск страны..." oninput="renderCountriesMgr()" autocomplete="off">
+    </div>
+    <div id="cmgrList"></div>
+    <div class="cmgr-actions">
+      <button class="btn-secondary" onclick="cmgrSelectAll()">Включить все</button>
+      <button class="btn-secondary" onclick="cmgrSelectNone()">Выключить все</button>
+    </div>
   </div>
 </div>
 
@@ -511,8 +580,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
    STATE
 ══════════════════════════════════════════════ */
 let movies=[], sortMode='date', filterTab='', filterGenres=[];
-let selectedType='film', selectedGenres=[], formRating=0, formWatched=false;
+let selectedType='film', selectedGenres=[], formRating=0, formWatched=false, selectedCountries=[];
 let coverDataUrl='', editingId=null;
+let enabledCountries=new Set(); // names of countries shown in picker dropdown
 let db=null; // IndexedDB instance
 
 const DB_NAME='filmoteka', DB_VER=1, STORE='movies';
@@ -621,7 +691,7 @@ function closeSheet(id){document.getElementById(id).classList.remove('open');}
 function renderList(){
   const q=document.getElementById('searchInput').value.trim().toLowerCase();
   let list=movies.filter(m=>{
-    const mq=!q||m.title.toLowerCase().includes(q)||(m.orig&&m.orig.toLowerCase().includes(q))||(m.country&&m.country.toLowerCase().includes(q));
+    const mq=!q||m.title.toLowerCase().includes(q)||(m.orig&&m.orig.toLowerCase().includes(q))||((m.countries||[]).some(c=>c.toLowerCase().includes(q)))||(m.country&&m.country.toLowerCase().includes(q));
     let mt=true;
     if(filterTab==='watched')mt=!!m.watched;
     else if(filterTab==='unwatched')mt=!m.watched;
@@ -641,7 +711,9 @@ function renderList(){
   }
 
   el.innerHTML=list.map((m,i)=>{
-    const meta=[m.year,m.country].filter(Boolean).join(' · ');
+    const countries = (m.countries && m.countries.length) ? m.countries : (m.country ? [m.country] : []);
+    const flagsHtml = countries.map(c=>countryFlag(c)).join('');
+    const meta=[m.year].filter(Boolean).join(' · ');
     const genres=(m.genres||[]).map(g=>`<span class="badge badge-genre">${esc(g)}</span>`).join('');
     const wB='';
     const rB=m.rating?`<span class="meta-text" style="color:var(--accent)">★ ${m.rating}/10</span>`:'';
@@ -678,6 +750,7 @@ function renderList(){
         ${m.orig?`<div class="movie-orig">${esc(m.orig)}</div>`:''}
         <div class="movie-meta">
           ${meta?`<span class="meta-text">${esc(meta)}</span>`:''}
+          ${flagsHtml?`<span class="meta-text" title="${esc(countries.join(', '))}" style="font-size:1rem;letter-spacing:2px">${flagsHtml}</span>`:''}
           <span class="badge ${BADGE_CLASS[m.type]||'badge-film'}">${TYPE_LABELS[m.type]||m.type}</span>
           ${wB}${rB}${durText}${genres}
         </div>
@@ -713,7 +786,9 @@ function openEditSheet(id){
   const m=movies.find(m=>m.id===id);if(!m)return;
   editingId=id; coverDataUrl=m.cover||'';
   const f=(fid,val)=>document.getElementById(fid).value=val||'';
-  f('inTitle',m.title); f('inOrig',m.orig); f('inYear',m.year); f('inCountry',m.country);
+  f('inTitle',m.title); f('inOrig',m.orig); f('inYear',m.year);
+  selectedCountries = m.countries && m.countries.length ? [...m.countries] : (m.country ? [m.country] : []);
+  renderCountrySelected();
   f('inImdb',m.imdb); f('inKp',m.kp); f('inUrl',m.url); f('inNotes',m.notes);
   f('inDuration',m.duration); f('inSeasons',m.seasons); f('inEpisodes',m.episodes); f('inEpDuration',m.epDuration);
 
@@ -738,7 +813,9 @@ function openEditSheet(id){
 function closeAddSheet(){closeSheet('addSheet');editingId=null;}
 
 function resetForm(){
-  ['inTitle','inOrig','inYear','inCountry','inImdb','inKp','inUrl','inNotes',
+  selectedCountries=[];
+  renderCountrySelected();
+  ['inTitle','inOrig','inYear','inImdb','inKp','inUrl','inNotes',
    'inDuration','inSeasons','inEpisodes','inEpDuration'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('dupWarn').classList.remove('show');
   document.getElementById('btnSubmit').disabled=false;
@@ -755,15 +832,14 @@ function resetForm(){
 async function submitForm(){
   const title=document.getElementById('inTitle').value.trim();
   if(!title){showToast('Введите название');return;}
-  const dup=movies.find(m=>m.title.toLowerCase()===title.toLowerCase()&&m.id!==editingId);
-  if(dup){showToast('Уже есть в каталоге');return;}
+  // duplicate titles allowed — different films can share a name
 
   const isSeries=SERIES_TYPES.has(selectedType);
   const data={
     title,
     orig:      document.getElementById('inOrig').value.trim(),
     year:      document.getElementById('inYear').value.trim(),
-    country:   document.getElementById('inCountry').value.trim(),
+    countries: [...selectedCountries],
     type:      selectedType,
     genres:    [...selectedGenres],
     rating:    formRating,
@@ -816,10 +892,10 @@ function toggleFormWatched(){ setFormWatched(!formWatched); }
 function checkDup(){
   const val=document.getElementById('inTitle').value.trim().toLowerCase();
   const warn=document.getElementById('dupWarn');
-  if(!val){warn.classList.remove('show');document.getElementById('btnSubmit').disabled=false;return;}
+  if(!val){warn.classList.remove('show');return;}
   const dup=movies.find(m=>m.title.toLowerCase()===val&&m.id!==editingId);
-  if(dup){document.getElementById('dupName').textContent=dup.title;warn.classList.add('show');document.getElementById('btnSubmit').disabled=true;}
-  else{warn.classList.remove('show');document.getElementById('btnSubmit').disabled=false;}
+  if(dup){document.getElementById('dupName').textContent=dup.title;warn.classList.add('show');}
+  else{warn.classList.remove('show');}
 }
 
 function pickType(el){
@@ -995,14 +1071,15 @@ function handleJSONImport(e){
 /* ══════════════════════════════════════════════
    CSV EXPORT / IMPORT (без картинок)
 ══════════════════════════════════════════════ */
-const CSV_HEADERS=['title','orig','year','country','type','genres','watched','rating','duration','seasons','episodes','epDuration','imdb','kp','url','notes'];
+const CSV_HEADERS=['title','orig','year','countries','type','genres','watched','rating','duration','seasons','episodes','epDuration','imdb','kp','url','notes'];
 
 function exportCSV(){
   closeSheet('menuSheet');
   if(!movies.length){showToast('Каталог пуст');return;}
   const rows=movies.map(m=>CSV_HEADERS.map(h=>{
     let v=m[h]??'';
-    if(h==='genres') v=(m.genres||[]).join('|');
+    if(h==='genres')   v=(m.genres||[]).join('|');
+    if(h==='countries') v=(m.countries&&m.countries.length?m.countries:m.country?[m.country]:[]).join('|');
     if(h==='watched')v=m.watched?'1':'0';
     v=String(v).replace(/"/g,'""');
     if(v.includes(',')||v.includes('"')||v.includes('\n'))v=`"${v}"`;
@@ -1031,7 +1108,7 @@ function handleCSVImport(e){
         parsed.push({
           id:Date.now()+i,
           title:c[idx('title')]||'',orig:c[idx('orig')]||'',
-          year:c[idx('year')]||'',country:c[idx('country')]||'',
+          year:c[idx('year')]||'',countries:(c[idx('countries')]||c[idx('country')]||'').split('|').filter(Boolean),
           type:c[idx('type')]||'film',
           genres:c[idx('genres')]?c[idx('genres')].split('|').filter(Boolean):[],
           watched:c[idx('watched')]==='1',
@@ -1132,6 +1209,174 @@ function closeCoverLightbox(){
   document.getElementById('coverLightbox').classList.remove('open');
 }
 
+
+
+/* ══════════════════════════════════════════════
+   COUNTRIES MANAGER
+══════════════════════════════════════════════ */
+const COUNTRIES_KEY='filmoteka_enabled_countries';
+
+function loadEnabledCountries(){
+  try{
+    const saved=localStorage.getItem(COUNTRIES_KEY);
+    if(saved){
+      enabledCountries=new Set(JSON.parse(saved));
+    }else{
+      // default: first 15 popular countries enabled
+      enabledCountries=new Set(['США','Великобритания','Франция','Германия','Италия',
+        'Испания','Япония','Южная Корея','Китай','Россия','СССР','Украина',
+        'Австралия','Канада','Индия']);
+    }
+  }catch(e){enabledCountries=new Set(COUNTRIES.map(c=>c.n));}
+}
+
+function saveEnabledCountries(){
+  localStorage.setItem(COUNTRIES_KEY,JSON.stringify([...enabledCountries]));
+}
+
+function openCountriesMgr(){
+  closeSheet('menuSheet');
+  document.getElementById('cmgrSearch').value='';
+  renderCountriesMgr();
+  openSheet('countriesMgrSheet');
+}
+
+function renderCountriesMgr(){
+  const q=document.getElementById('cmgrSearch').value.trim().toLowerCase();
+  const list=COUNTRIES.filter(c=>!q||c.n.toLowerCase().includes(q));
+  document.getElementById('cmgrList').innerHTML=list.map(c=>{
+    const on=enabledCountries.has(c.n);
+    return `<div class="cmgr-item" onclick="cmgrToggle('${c.n}')">
+      <span class="cmgr-flag">${c.f}</span>
+      <span class="cmgr-name">${esc(c.n)}</span>
+      <div class="cmgr-toggle${on?' on':''}"></div>
+    </div>`;
+  }).join('');
+}
+
+function cmgrToggle(name){
+  if(enabledCountries.has(name))enabledCountries.delete(name);
+  else enabledCountries.add(name);
+  saveEnabledCountries();
+  renderCountriesMgr();
+}
+
+function cmgrSelectAll(){
+  COUNTRIES.forEach(c=>enabledCountries.add(c.n));
+  saveEnabledCountries();
+  renderCountriesMgr();
+}
+
+function cmgrSelectNone(){
+  enabledCountries.clear();
+  saveEnabledCountries();
+  renderCountriesMgr();
+}
+
+/* ══════════════════════════════════════════════
+   COUNTRIES
+══════════════════════════════════════════════ */
+const COUNTRIES=[
+  {n:'США',f:'🇺🇸'},{n:'Великобритания',f:'🇬🇧'},{n:'Франция',f:'🇫🇷'},
+  {n:'Германия',f:'🇩🇪'},{n:'Италия',f:'🇮🇹'},{n:'Испания',f:'🇪🇸'},
+  {n:'Япония',f:'🇯🇵'},{n:'Южная Корея',f:'🇰🇷'},{n:'Китай',f:'🇨🇳'},
+  {n:'Россия',f:'🇷🇺'},{n:'СССР',f:'🇸🇺'},{n:'Украина',f:'🇺🇦'},
+  {n:'Австралия',f:'🇦🇺'},{n:'Канада',f:'🇨🇦'},{n:'Мексика',f:'🇲🇽'},
+  {n:'Бразилия',f:'🇧🇷'},{n:'Аргентина',f:'🇦🇷'},{n:'Индия',f:'🇮🇳'},
+  {n:'Иран',f:'🇮🇷'},{n:'Турция',f:'🇹🇷'},{n:'Израиль',f:'🇮🇱'},
+  {n:'Швеция',f:'🇸🇪'},{n:'Норвегия',f:'🇳🇴'},{n:'Дания',f:'🇩🇰'},
+  {n:'Финляндия',f:'🇫🇮'},{n:'Нидерланды',f:'🇳🇱'},{n:'Бельгия',f:'🇧🇪'},
+  {n:'Швейцария',f:'🇨🇭'},{n:'Австрия',f:'🇦🇹'},{n:'Польша',f:'🇵🇱'},
+  {n:'Чехия',f:'🇨🇿'},{n:'Венгрия',f:'🇭🇺'},{n:'Румыния',f:'🇷🇴'},
+  {n:'Португалия',f:'🇵🇹'},{n:'Греция',f:'🇬🇷'},{n:'Ирландия',f:'🇮🇪'},
+  {n:'Новая Зеландия',f:'🇳🇿'},{n:'ЮАР',f:'🇿🇦'},{n:'Египет',f:'🇪🇬'},
+  {n:'Нигерия',f:'🇳🇬'},{n:'Гонконг',f:'🇭🇰'},{n:'Тайвань',f:'🇹🇼'},
+  {n:'Таиланд',f:'🇹🇭'},{n:'Вьетнам',f:'🇻🇳'},{n:'Филиппины',f:'🇵🇭'},
+  {n:'Колумбия',f:'🇨🇴'},{n:'Чили',f:'🇨🇱'},{n:'Перу',f:'🇵🇪'},
+  {n:'Сербия',f:'🇷🇸'},{n:'Хорватия',f:'🇭🇷'},{n:'Словакия',f:'🇸🇰'},
+];
+
+function countryFlag(name){
+  const c=COUNTRIES.find(c=>c.n===name);
+  return c?c.f:(name?'🏳':'');
+}
+
+let countryDropdownOpen=false;
+
+function toggleCountryDropdown(){
+  countryDropdownOpen=!countryDropdownOpen;
+  const dd=document.getElementById('countryDropdown');
+  dd.classList.toggle('open',countryDropdownOpen);
+  if(countryDropdownOpen){
+    renderCountryList('');
+    setTimeout(()=>document.getElementById('countrySearch').focus(),80);
+  }
+}
+
+function closeCountryDropdown(){
+  countryDropdownOpen=false;
+  document.getElementById('countryDropdown').classList.remove('open');
+}
+
+function filterCountries(){
+  renderCountryList(document.getElementById('countrySearch').value.trim().toLowerCase());
+}
+
+function renderCountryList(q){
+  // show enabled countries first, then filter by query
+  const list=COUNTRIES.filter(c=>enabledCountries.has(c.n)&&(!q||c.n.toLowerCase().includes(q)));
+  // if search query also match disabled countries — show them dimmed
+  const listExtra=q?COUNTRIES.filter(c=>!enabledCountries.has(c.n)&&c.n.toLowerCase().includes(q)):[];
+  const makeOpt=(c,dimmed)=>{
+    const sel=selectedCountries.includes(c.n);
+    return `<div class="country-opt${sel?' selected':''}${dimmed?' dimmed':''}" onclick="toggleCountry('${c.n}')">
+      <span class="flag">${c.f}</span>
+      <span class="name">${esc(c.n)}${dimmed?'<span style="font-size:.6rem;color:var(--muted);margin-left:4px">(не в списке)</span>':''}</span>
+      ${sel?'<span class="check">✓</span>':''}
+    </div>`;
+  };
+  document.getElementById('countryList').innerHTML=
+    list.map(c=>makeOpt(c,false)).join('')+
+    (listExtra.length?'<div style="height:1px;background:var(--border);margin:4px 0"></div>'+listExtra.map(c=>makeOpt(c,true)).join(''):'');
+}
+
+function toggleCountry(name){
+  if(selectedCountries.includes(name)){
+    selectedCountries=selectedCountries.filter(c=>c!==name);
+  }else{
+    selectedCountries.push(name);
+  }
+  renderCountrySelected();
+  renderCountryList(document.getElementById('countrySearch').value.trim().toLowerCase());
+}
+
+function renderCountrySelected(){
+  const wrap=document.getElementById('countriesSelected');
+  const ph  =document.getElementById('countriesPlaceholder');
+  if(!selectedCountries.length){
+    ph.style.display='';
+    // remove all tags
+    wrap.querySelectorAll('.country-flag-tag').forEach(t=>t.remove());
+    return;
+  }
+  ph.style.display='none';
+  wrap.querySelectorAll('.country-flag-tag').forEach(t=>t.remove());
+  selectedCountries.forEach(name=>{
+    const flag=countryFlag(name);
+    const tag=document.createElement('span');
+    tag.className='country-flag-tag';
+    tag.innerHTML=`${flag} ${esc(name)}<span class="rm" onclick="event.stopPropagation();toggleCountry('${name}')">✕</span>`;
+    wrap.appendChild(tag);
+  });
+}
+
+// Close dropdown on outside click
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#countryDropdown')&&!e.target.closest('#countriesSelected')){
+    closeCountryDropdown();
+  }
+});
+
 function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2200);
@@ -1141,6 +1386,7 @@ function showToast(msg){
    SERVICE WORKER
 ══════════════════════════════════════════════ */
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+loadEnabledCountries();
 
 /* ══════════════════════════════════════════════
    INIT
