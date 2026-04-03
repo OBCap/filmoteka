@@ -1380,7 +1380,6 @@ function renderCountrySelected(){
   ph.style.display='none';
   wrap.querySelectorAll('.country-flag-tag').forEach(t=>t.remove());
   selectedCountries.forEach(name=>{
-    const flag=countryFlag(name);
     const tag=document.createElement('span');
     tag.className='country-flag-tag';
     const flagImg=countryFlagImg(name,'flag-img-sm');
