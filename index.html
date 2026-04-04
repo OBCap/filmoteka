@@ -1084,7 +1084,7 @@ function exportCSV(){
     if(h==='countries') v=(m.countries&&m.countries.length?m.countries:m.country?[m.country]:[]).join('|');
     if(h==='watched')v=m.watched?'1':'0';
     v=String(v).replace(/"/g,'""');
-    if(v.includes(',')||v.includes('"')||v.includes('\n'))v=`"${v}"`;
+    if(v.includes(',')||v.includes('"')||v.includes('\n')||v.includes('\r'))v=`"${v}"`;
     return v;
   }).join(','));
   const csv='\uFEFF'+[CSV_HEADERS.join(','),...rows].join('\r\n');
@@ -1094,19 +1094,43 @@ function exportCSV(){
 
 function triggerImportCSV(){closeSheet('menuSheet');document.getElementById('csvFileInput').value='';document.getElementById('csvFileInput').click();}
 
+/* Parse entire CSV text into array of row-arrays, correctly handling
+   quoted fields that contain commas, quotes, and newlines */
+function parseCSV(text){
+  const rows=[];
+  let col='', row=[], inQ=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i], nx=text[i+1];
+    if(inQ){
+      if(ch==='"'&&nx==='"'){col+='"';i++;}        // escaped quote
+      else if(ch==='"'){inQ=false;}                 // closing quote
+      else{col+=ch;}                                // char inside quotes (incl. newlines)
+    } else {
+      if(ch==='"'){inQ=true;}                       // opening quote
+      else if(ch===','){row.push(col);col='';}      // field separator
+      else if(ch==='\r'&&nx==='\n'){row.push(col);rows.push(row);row=[];col='';i++;} // CRLF
+      else if(ch==='\n'||ch==='\r'){row.push(col);rows.push(row);row=[];col='';}     // LF or CR
+      else{col+=ch;}
+    }
+  }
+  if(col||row.length){row.push(col);rows.push(row);}
+  return rows;
+}
+
 function handleCSVImport(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=async ev=>{
     try{
-      const text=ev.target.result.replace(/^\uFEFF/,'');
-      const lines=text.split(/\r?\n/).filter(l=>l.trim());
-      if(lines.length<2){showToast('Файл пуст или неверный формат');return;}
-      const hdrs=parseCSVRow(lines[0]);
+      const text=ev.target.result.replace(/^\uFEFF/,''); // strip BOM
+      const rows=parseCSV(text).filter(r=>r.some(c=>c.trim()));
+      if(rows.length<2){showToast('Файл пуст или неверный формат');return;}
+      const hdrs=rows[0];
       const idx=h=>hdrs.indexOf(h);
       const parsed=[];
-      for(let i=1;i<lines.length;i++){
-        const c=parseCSVRow(lines[i]);if(!c[idx('title')])continue;
+      for(let i=1;i<rows.length;i++){
+        const c=rows[i];
+        if(!c[idx('title')]||!c[idx('title')].trim())continue;
         parsed.push({
           id:Date.now()+i,
           title:c[idx('title')]||'',orig:c[idx('orig')]||'',
@@ -1137,7 +1161,7 @@ function handleCSVImport(e){
         movies=[...newOnes,...movies];
         renderList();showToast(`Добавлено ${newOnes.length} записей`);
       });
-    }catch(err){showToast('Ошибка чтения файла');}
+    }catch(err){console.error(err);showToast('Ошибка чтения файла');}
   };
   reader.readAsText(file,'utf-8');
 }
@@ -1159,15 +1183,7 @@ async function shareOrDownload(blob, filename, mimeType){
   document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
-function parseCSVRow(line){
-  const r=[];let cur='',inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(inQ){if(c==='"'&&line[i+1]==='"'){cur+='"';i++;}else if(c==='"')inQ=false;else cur+=c;}
-    else{if(c==='"')inQ=true;else if(c===','){r.push(cur);cur='';}else cur+=c;}
-  }
-  r.push(cur);return r;
-}
+
 
 /* ══════════════════════════════════════════════
    CONFIRM
