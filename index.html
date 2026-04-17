@@ -311,14 +311,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Mon
       <div class="section-divider">Основное</div>
 
       <div class="field">
-        <label>Название *</label>
+        <label>Название</label>
         <input type="text" id="inTitle" placeholder="Русское название..." autocomplete="off" oninput="checkDup()">
-        <div class="dup-warn" id="dupWarn">⚠ Уже есть похожее название: <span id="dupName"></span> — можно всё равно добавить</div>
+        <div class="dup-warn" id="dupWarn">⚠ Похожее название уже есть: <span id="dupName"></span> — можно всё равно добавить</div>
       </div>
 
       <div class="field">
         <label>Оригинальное название</label>
-        <input type="text" id="inOrig" placeholder="Original title...">
+        <input type="text" id="inOrig" placeholder="Original title..." oninput="checkDup()">
       </div>
 
       <div class="row2">
@@ -758,7 +758,7 @@ function renderList(){
       <span class="movie-num">${String(i+1).padStart(3,'0')}</span>
       ${thumb}
       <div class="movie-body" onclick="openEditSheet(${m.id})">
-        <div class="movie-title">${esc(m.title)}</div>
+        <div class="movie-title">${esc(m.title||m.orig)}</div>
         ${m.orig?`<div class="movie-orig">${esc(m.orig)}</div>`:''}
         <div class="movie-meta">
           ${meta?`<span class="meta-text">${esc(meta)}</span>`:''}
@@ -843,7 +843,8 @@ function resetForm(){
 
 async function submitForm(){
   const title=document.getElementById('inTitle').value.trim();
-  if(!title){showToast('Введите название');return;}
+  const origVal=document.getElementById('inOrig').value.trim();
+  if(!title&&!origVal){showToast('Введите хотя бы одно название');return;}
   // duplicate titles allowed — different films can share a name
 
   const isSeries=SERIES_TYPES.has(selectedType);
@@ -902,12 +903,26 @@ function setFormWatched(val){
 }
 function toggleFormWatched(){ setFormWatched(!formWatched); }
 function checkDup(){
-  const val=document.getElementById('inTitle').value.trim().toLowerCase();
+  const t=document.getElementById('inTitle').value.trim().toLowerCase();
+  const o=document.getElementById('inOrig').value.trim().toLowerCase();
   const warn=document.getElementById('dupWarn');
-  if(!val){warn.classList.remove('show');return;}
-  const dup=movies.find(m=>m.title.toLowerCase()===val&&m.id!==editingId);
-  if(dup){document.getElementById('dupName').textContent=dup.title;warn.classList.add('show');}
-  else{warn.classList.remove('show');}
+  if(!t&&!o){warn.classList.remove('show');return;}
+  const dup=movies.find(m=>{
+    if(m.id===editingId)return false;
+    const mt=(m.title||'').toLowerCase();
+    const mo=(m.orig||'').toLowerCase();
+    // match if any non-empty field matches any non-empty field of existing record
+    if(t&&(mt===t||mo===t))return true;
+    if(o&&(mt===o||mo===o))return true;
+    return false;
+  });
+  if(dup){
+    const label=dup.title||(dup.orig?`«${dup.orig}»`:'');
+    document.getElementById('dupName').textContent=label;
+    warn.classList.add('show');
+  } else {
+    warn.classList.remove('show');
+  }
 }
 
 function pickType(el){
@@ -1073,7 +1088,11 @@ function handleJSONImport(e){
       const payload=JSON.parse(ev.target.result);
       const imported=payload.movies||payload; // support both formats
       if(!Array.isArray(imported)||!imported.length){showToast('Нет данных в файле');return;}
-      const newOnes=imported.filter(p=>!movies.some(m=>m.title.toLowerCase()===p.title.toLowerCase()));
+      const newOnes=imported.filter(p=>!movies.some(m=>{
+        const mt=(m.title||'').toLowerCase(), mo=(m.orig||'').toLowerCase();
+        const pt=(p.title||'').toLowerCase(), po=(p.orig||'').toLowerCase();
+        return (pt&&(mt===pt||mo===pt))||(po&&(mt===po||mo===po));
+      }));
       const dups=imported.length-newOnes.length;
       let txt=`Найдено: <strong>${imported.length}</strong><br>Новых: <strong>${newOnes.length}</strong>`;
       if(dups)txt+=`<br>Дубликатов (пропустим): <strong>${dups}</strong>`;
@@ -1169,7 +1188,11 @@ function handleCSVImport(e){
         });
       }
       if(!parsed.length){showToast('Нет данных для импорта');return;}
-      const newOnes=parsed.filter(p=>!movies.some(m=>m.title.toLowerCase()===p.title.toLowerCase()));
+      const newOnes=parsed.filter(p=>!movies.some(m=>{
+        const mt=(m.title||'').toLowerCase(), mo=(m.orig||'').toLowerCase();
+        const pt=(p.title||'').toLowerCase(), po=(p.orig||'').toLowerCase();
+        return (pt&&(mt===pt||mo===pt))||(po&&(mt===po||mo===po));
+      }));
       const dups=parsed.length-newOnes.length;
       let txt=`Найдено: <strong>${parsed.length}</strong><br>Новых: <strong>${newOnes.length}</strong>`;
       if(dups)txt+=`<br>Дубликатов (пропустим): <strong>${dups}</strong>`;
