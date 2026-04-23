@@ -1068,11 +1068,17 @@ function clearGenreFilter(){
 /* ══════════════════════════════════════════════
    JSON EXPORT / IMPORT (полный, с картинками)
 ══════════════════════════════════════════════ */
+function localDateStr(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
 async function exportJSON(){
   closeSheet('menuSheet');
   if(!movies.length){showToast('Каталог пуст');return;}
   const payload=JSON.stringify({version:2,exported:new Date().toISOString(),movies},null,2);
-  const filename=`filmoteka_${new Date().toISOString().slice(0,10)}.json`;
+  const filename=`filmoteka_${localDateStr()}.json`;
   const blob=new Blob([payload],{type:'application/json;charset=utf-8'});
   await shareOrDownload(blob,filename,'application/json');
   showToast(`Экспортировано ${movies.length} записей`);
@@ -1125,7 +1131,7 @@ function exportCSV(){
     return v;
   }).join(','));
   const csv='\uFEFF'+[CSV_HEADERS.join(','),...rows].join('\r\n');
-  const filename=`filmoteka_${new Date().toISOString().slice(0,10)}.csv`;
+  const filename=`filmoteka_${localDateStr()}.csv`;
   shareOrDownload(new Blob([csv],{type:'text/csv;charset=utf-8'}),filename,'text/csv');
 }
 
